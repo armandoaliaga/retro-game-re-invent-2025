@@ -62,6 +62,277 @@ const StorageManager = {
     }
 };
 
+// Audio Manager with Web Audio API
+const AudioManager = {
+    audioContext: null,
+    isAudioEnabled: false,
+    audioInitialized: false,
+    musicGainNode: null,
+    musicLoopTimeout: null,
+    isMusicPlaying: false,
+    
+    // Initialize audio system
+    initialize() {
+        if (this.audioInitialized) {
+            return;
+        }
+        
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (AudioContext) {
+                this.audioContext = new AudioContext();
+                console.log('Audio context created successfully');
+                
+                // Create gain node for music volume control
+                this.musicGainNode = this.audioContext.createGain();
+                this.musicGainNode.connect(this.audioContext.destination);
+                this.musicGainNode.gain.value = 0.15; // Lower volume for background music
+            }
+        } catch (e) {
+            console.warn('Failed to create audio context:', e);
+            this.audioContext = null;
+        }
+        
+        this.audioInitialized = true;
+        this.setupUserInteractionHandler();
+    },
+    
+    // Set up handler to enable audio on first user interaction
+    setupUserInteractionHandler() {
+        const enableAudio = () => {
+            if (!this.isAudioEnabled) {
+                this.isAudioEnabled = true;
+                console.log('Audio enabled by user interaction');
+                
+                if (this.audioContext && this.audioContext.state === 'suspended') {
+                    this.audioContext.resume().then(() => {
+                        console.log('Audio context resumed');
+                    }).catch((e) => {
+                        console.warn('Failed to resume audio context:', e);
+                    });
+                }
+            }
+        };
+        
+        document.addEventListener('keydown', enableAudio, { once: true });
+        document.addEventListener('click', enableAudio, { once: true });
+    },
+    
+    // Play jump sound effect (upward chirp)
+    playJumpSound() {
+        if (!this.isAudioEnabled || !this.audioContext) return;
+        
+        try {
+            const now = this.audioContext.currentTime;
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+            
+            // Square wave for retro sound
+            oscillator.type = 'square';
+            
+            // Frequency sweep from 400Hz to 800Hz
+            oscillator.frequency.setValueAtTime(400, now);
+            oscillator.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+            
+            // Volume envelope
+            gainNode.gain.setValueAtTime(0.3, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            
+            oscillator.start(now);
+            oscillator.stop(now + 0.1);
+        } catch (e) {
+            console.warn('Failed to play jump sound:', e);
+        }
+    },
+    
+    // Play collision sound effect (downward crash)
+    playCollisionSound() {
+        if (!this.isAudioEnabled || !this.audioContext) return;
+        
+        try {
+            const now = this.audioContext.currentTime;
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+            
+            // Sawtooth wave for harsh sound
+            oscillator.type = 'sawtooth';
+            
+            // Frequency sweep from 400Hz down to 50Hz
+            oscillator.frequency.setValueAtTime(400, now);
+            oscillator.frequency.exponentialRampToValueAtTime(50, now + 0.3);
+            
+            // Volume envelope
+            gainNode.gain.setValueAtTime(0.4, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            
+            oscillator.start(now);
+            oscillator.stop(now + 0.3);
+        } catch (e) {
+            console.warn('Failed to play collision sound:', e);
+        }
+    },
+    
+    // Play celebration sound effect (ascending arpeggio)
+    playCelebrationSound() {
+        if (!this.isAudioEnabled || !this.audioContext) return;
+        
+        try {
+            const now = this.audioContext.currentTime;
+            const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+            
+            notes.forEach((freq, i) => {
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.type = 'square';
+                oscillator.frequency.value = freq;
+                
+                const startTime = now + (i * 0.08);
+                const endTime = startTime + 0.15;
+                
+                gainNode.gain.setValueAtTime(0.2, startTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, endTime);
+                
+                oscillator.start(startTime);
+                oscillator.stop(endTime);
+            });
+        } catch (e) {
+            console.warn('Failed to play celebration sound:', e);
+        }
+    },
+    
+    // Start retro background music (looping melody)
+    startBackgroundMusic() {
+        if (!this.isAudioEnabled || !this.audioContext) return;
+        
+        // Stop any existing music first
+        this.stopBackgroundMusic();
+        
+        try {
+            this.isMusicPlaying = true;
+            this.playMusicLoop();
+        } catch (e) {
+            console.warn('Failed to start background music:', e);
+        }
+    },
+    
+    // Play a looping retro melody
+    playMusicLoop() {
+        if (!this.isMusicPlaying || !this.audioContext) return;
+        
+        const now = this.audioContext.currentTime;
+        
+        // Retro melody pattern (frequencies in Hz)
+        // Using pentatonic scale for a catchy retro feel
+        const melody = [
+            { freq: 523.25, duration: 0.2 },  // C5
+            { freq: 659.25, duration: 0.2 },  // E5
+            { freq: 783.99, duration: 0.2 },  // G5
+            { freq: 659.25, duration: 0.2 },  // E5
+            { freq: 523.25, duration: 0.2 },  // C5
+            { freq: 392.00, duration: 0.2 },  // G4
+            { freq: 523.25, duration: 0.2 },  // C5
+            { freq: 392.00, duration: 0.2 },  // G4
+            { freq: 493.88, duration: 0.2 },  // B4
+            { freq: 587.33, duration: 0.2 },  // D5
+            { freq: 659.25, duration: 0.2 },  // E5
+            { freq: 587.33, duration: 0.2 },  // D5
+            { freq: 493.88, duration: 0.2 },  // B4
+            { freq: 392.00, duration: 0.2 },  // G4
+            { freq: 493.88, duration: 0.2 },  // B4
+            { freq: 523.25, duration: 0.4 }   // C5 (longer)
+        ];
+        
+        // Clear any existing oscillators
+        this.activeOscillators = this.activeOscillators || [];
+        
+        let currentTime = 0;
+        
+        melody.forEach(note => {
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(this.musicGainNode);
+            
+            // Square wave for retro 8-bit sound
+            oscillator.type = 'square';
+            oscillator.frequency.value = note.freq;
+            
+            const startTime = now + currentTime;
+            const endTime = startTime + note.duration;
+            
+            // Envelope for each note
+            gainNode.gain.setValueAtTime(0.8, startTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, endTime);
+            
+            oscillator.start(startTime);
+            oscillator.stop(endTime);
+            
+            // Track active oscillators
+            this.activeOscillators.push({ oscillator, gainNode });
+            
+            // Clean up after the note ends
+            oscillator.onended = () => {
+                const index = this.activeOscillators.findIndex(o => o.oscillator === oscillator);
+                if (index > -1) {
+                    this.activeOscillators.splice(index, 1);
+                }
+            };
+            
+            currentTime += note.duration;
+        });
+        
+        // Schedule next loop
+        const loopDuration = currentTime * 1000;
+        this.musicLoopTimeout = setTimeout(() => {
+            if (this.isMusicPlaying) {
+                this.playMusicLoop();
+            }
+        }, loopDuration);
+    },
+    
+    // Stop background music
+    stopBackgroundMusic() {
+        this.isMusicPlaying = false;
+        
+        // Clear any pending loop timeout
+        if (this.musicLoopTimeout) {
+            clearTimeout(this.musicLoopTimeout);
+            this.musicLoopTimeout = null;
+        }
+        
+        // Stop all active oscillators immediately
+        if (this.activeOscillators) {
+            const now = this.audioContext ? this.audioContext.currentTime : 0;
+            this.activeOscillators.forEach(({ oscillator, gainNode }) => {
+                try {
+                    // Fade out quickly to avoid clicks
+                    if (this.audioContext) {
+                        gainNode.gain.cancelScheduledValues(now);
+                        gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                    }
+                    // Stop the oscillator after fade
+                    oscillator.stop(now + 0.05);
+                } catch (e) {
+                    // Oscillator might already be stopped
+                }
+            });
+            this.activeOscillators = [];
+        }
+    }
+};
+
 // Game state
 let gameState = 'start'; // 'start', 'playing', 'gameOver'
 let score = 0;
@@ -379,8 +650,12 @@ function handleInput(e) {
         if (gameState === 'start') {
             gameState = 'playing';
             resetGame();
+            // Start background music when game starts
+            AudioManager.startBackgroundMusic();
         } else if (gameState === 'playing') {
             player.velocity = JUMP_POWER;
+            // Play jump sound effect
+            AudioManager.playJumpSound();
         } else if (gameState === 'gameOver') {
             gameState = 'start';
         }
@@ -458,6 +733,10 @@ function update() {
             if (score > lastHighScore) {
                 // Trigger confetti effect for new high score
                 ParticleSystem.createConfetti();
+                
+                // Play celebration sound effect
+                AudioManager.playCelebrationSound();
+                
                 lastHighScore = score; // Update to prevent repeated confetti
             }
             
@@ -490,6 +769,12 @@ function checkCollisions() {
         const explosionY = player.y < 0 ? player.y : player.y + player.height;
         ParticleSystem.createExplosion(explosionX, explosionY);
         
+        // Play collision sound effect
+        AudioManager.playCollisionSound();
+        
+        // Stop background music on game over
+        AudioManager.stopBackgroundMusic();
+        
         gameState = 'gameOver';
         return;
     }
@@ -507,6 +792,12 @@ function checkCollisions() {
                 const explosionY = player.y < obstacle.topHeight ? 
                     obstacle.topHeight : obstacle.bottomY;
                 ParticleSystem.createExplosion(explosionX, explosionY);
+                
+                // Play collision sound effect
+                AudioManager.playCollisionSound();
+                
+                // Stop background music on game over
+                AudioManager.stopBackgroundMusic();
                 
                 gameState = 'gameOver';
                 return;
@@ -630,6 +921,9 @@ function gameLoop() {
     draw();
     requestAnimationFrame(gameLoop);
 }
+
+// Initialize audio system
+AudioManager.initialize();
 
 // Start the game loop
 gameLoop();

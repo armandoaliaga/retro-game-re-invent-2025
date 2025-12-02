@@ -101,5 +101,62 @@
   - **Property 12: Confetti downward motion**
   - **Validates: Requirements 5.4**
 
-- [x] 7. Checkpoint - Ensure all tests pass
+- [x] 7. Implement audio manager foundation
+  - Create AudioManager class/object with audio context and sound storage
+  - Implement audio initialization function with error handling
+  - Create audio file loading functions for sound effects and music
+  - Add isAudioEnabled flag to track audio availability
+  - Handle autoplay restrictions by enabling audio on first user interaction
+  - Add error handling for audio context creation failures
+  - _Requirements: 6.4, 7.5_
+
+- [ ]* 7.1 Write unit tests for audio initialization
+  - Test audio manager initialization with available audio context
+  - Test audio manager initialization when audio context is unavailable
+  - Test audio file loading failure handling
+
+- [x] 8. Implement sound effects
+  - Load jump sound effect audio file
+  - Load collision sound effect audio file
+  - Load celebration sound effect audio file
+  - Create playJumpSound() function and integrate with jump input handling
+  - Create playCollisionSound() function and integrate with collision detection
+  - Create playCelebrationSound() function and integrate with new high score event
+  - Set appropriate volume levels for sound effects (0.5)
+  - Add error handling to prevent sound playback failures from breaking gameplay
+  - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
+
+- [ ]* 8.1 Write property test for jump sound trigger
+  - **Property 13: Jump sound on player action**
+  - **Validates: Requirements 6.1**
+
+- [ ]* 8.2 Write property test for collision sound trigger
+  - **Property 14: Collision sound on impact**
+  - **Validates: Requirements 6.2**
+
+- [ ]* 8.3 Write property test for celebration sound trigger
+  - **Property 15: Celebration sound on new high score**
+  - **Validates: Requirements 6.3**
+
+- [x] 9. Implement background music system
+  - Load lofi background music audio file
+  - Create startBackgroundMusic() function
+  - Create stopBackgroundMusic() function
+  - Set background music to loop continuously
+  - Set appropriate volume level for background music (0.3)
+  - Integrate music start with game state transition to 'playing'
+  - Integrate music stop with game state transition from 'playing' to 'gameOver'
+  - Handle music restart when game restarts
+  - Add error handling for music loading and playback failures
+  - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
+
+- [ ]* 9.1 Write property test for background music state synchronization
+  - **Property 16: Background music state synchronization**
+  - **Validates: Requirements 7.1, 7.3**
+
+- [ ]* 9.2 Write property test for background music looping
+  - **Property 17: Background music looping**
+  - **Validates: Requirements 7.2**
+
+- [x] 10. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
